@@ -66,7 +66,7 @@ export default function Checkout() {
         const payload = generatePixPayload(pixKey, 'Admin', 'Sao Paulo', service.price, orderId.substring(0, 10));
         setPixPayload(payload);
         
-        const orderData = {
+        await setDoc(orderRef, {
           customerName: formData.customerName || 'Cliente Pix',
           customerEmail: formData.customerEmail || '',
           customerPhone: formData.customerPhone || '',
@@ -76,22 +76,7 @@ export default function Checkout() {
           status: 'pending',
           paymentMethod: 'pix',
           createdAt: serverTimestamp()
-        };
-        await setDoc(orderRef, orderData);
-
-        // Send "Order Created" Email for Pix
-        try {
-          await fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'order_created',
-              order: { id: orderId, ...orderData, price: service.price }
-            })
-          });
-        } catch (e) {
-          console.error("Erro ao enviar e-mail de criação de pedido (Pix):", e);
-        }
+        });
 
         setShowPix(true);
         setSubmitting(false);
@@ -103,13 +88,7 @@ export default function Checkout() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          service: {
-            id: service.id,
-            title: service.title,
-            description: service.description?.substring(0, 1000),
-            price: service.price,
-            imageUrl: service.imageUrl?.startsWith('http') ? service.imageUrl : undefined
-          },
+          service,
           customer: {
             name: formData.customerName,
             email: formData.customerEmail,
@@ -126,13 +105,16 @@ export default function Checkout() {
         data = JSON.parse(text);
       } catch (e) {
         console.error("Resposta não-JSON do servidor:", text);
-        throw new Error("Erro de comunicação com o servidor de pagamentos.");
+        if (response.status === 413) {
+          throw new Error("O pedido é muito grande para ser processado. Por favor, tente novamente ou entre em contato com o suporte.");
+        }
+        throw new Error(`Erro de comunicação com o servidor (Status: ${response.status}).`);
       }
 
       if (!response.ok) throw new Error(data.error || 'Erro ao criar sessão de pagamento');
 
       // 3. Save Order to Firestore as Pending
-      const orderData = {
+      await setDoc(orderRef, {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
@@ -142,24 +124,9 @@ export default function Checkout() {
         status: 'pending',
         stripeSessionId: data.sessionId,
         createdAt: serverTimestamp()
-      };
-      await setDoc(orderRef, orderData);
+      });
 
-      // 4. Send "Order Created" Email
-      try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'order_created',
-            order: { id: orderId, ...orderData, price: service.price }
-          })
-        });
-      } catch (e) {
-        console.error("Erro ao enviar e-mail de criação de pedido:", e);
-      }
-
-      // 5. Redirect to Stripe
+      // 4. Redirect to Stripe
       if (window.self !== window.top) {
         // Estamos dentro de um iframe (AI Studio Preview)
         // O Stripe bloqueia iframes, então abrimos em nova aba
