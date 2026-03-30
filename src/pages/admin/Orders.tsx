@@ -57,7 +57,7 @@ export default function AdminOrders() {
   };
 
   return (
-    <div className="p-8">
+    <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Pedidos</h1>
       </div>

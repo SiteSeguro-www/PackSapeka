@@ -323,7 +323,7 @@ export default function Checkout() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <h3 className="font-semibold text-white/80 border-b border-white/10 pb-2">Forma de Pagamento</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className={`border rounded-xl p-4 cursor-pointer flex flex-col items-center gap-2 transition-all duration-300 ${formData.paymentMethod === 'credit_card' ? 'border-orange-500 bg-orange-500/10 shadow-[0_0_15px_rgba(249,115,22,0.2)] scale-105' : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}>
                   <input type="radio" name="paymentMethod" value="credit_card" checked={formData.paymentMethod === 'credit_card'} onChange={handleChange} className="sr-only" />
                   <CreditCard size={24} className={formData.paymentMethod === 'credit_card' ? 'text-orange-500' : 'text-white/50'} />

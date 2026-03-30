@@ -27,4 +27,13 @@ body {
   color: #ffffff;
   background-image: radial-gradient(circle at 50% 0%, #2a1100 0%, #050505 60%);
   background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

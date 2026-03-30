@@ -89,7 +89,7 @@ export default function AdminProfile() {
   if (loading) return <div className="p-8 flex items-center justify-center">Carregando...</div>;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Meu Perfil</h1>
       </div>

@@ -141,7 +141,7 @@ export default function AdminServices() {
   if (loading) return <div className="p-8 flex items-center justify-center">Carregando...</div>;
 
   return (
-    <div className="p-8">
+    <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Serviços</h1>
         <button 

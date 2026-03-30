@@ -90,12 +90,12 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-col sm:flex-row gap-4"
+          className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0"
         >
-          <a href="#services" className="relative group overflow-hidden bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 text-white px-8 py-4 rounded-full font-bold transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(249,115,22,0.5)] flex items-center justify-center gap-2 bg-[length:200%_auto] animate-shine">
+          <a href="#services" className="relative group overflow-hidden bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 text-white px-8 py-4 rounded-full font-bold transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(249,115,22,0.5)] flex items-center justify-center gap-2 bg-[length:200%_auto] animate-shine w-full sm:w-auto">
             Ver Serviços <ArrowRight size={18} />
           </a>
-          <a href="https://t.me/MagrinhaSapeka" target="_blank" rel="noopener noreferrer" className="bg-white/5 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/10 transition-colors border border-white/10 backdrop-blur-sm">
+          <a href="https://t.me/MagrinhaSapeka" target="_blank" rel="noopener noreferrer" className="bg-white/5 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/10 transition-colors border border-white/10 backdrop-blur-sm w-full sm:w-auto text-center">
             Entrar em Contato
           </a>
         </motion.div>

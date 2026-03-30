@@ -12,26 +12,26 @@ export default function Navbar() {
           PackSapeka<span className="text-white">.</span>
         </Link>
 
-        <div className="flex items-center gap-4">
-          <a href="#services" className="text-sm font-medium text-white/70 hover:text-white transition-colors">Serviços</a>
-          <a href="#reviews" className="text-sm font-medium text-white/70 hover:text-white transition-colors">Avaliações</a>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <a href="#services" className="hidden sm:block text-sm font-medium text-white/70 hover:text-white transition-colors">Serviços</a>
+          <a href="#reviews" className="hidden sm:block text-sm font-medium text-white/70 hover:text-white transition-colors">Avaliações</a>
           
           {isAdmin && (
-            <Link to="/admin" className="flex items-center gap-2 text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors ml-4">
+            <Link to="/admin" className="flex items-center gap-1 sm:gap-2 text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors sm:ml-4">
               <LayoutDashboard size={16} />
-              Admin
+              <span className="hidden sm:inline">Admin</span>
             </Link>
           )}
 
           {user ? (
-            <button onClick={logout} className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors ml-4">
+            <button onClick={logout} className="flex items-center gap-1 sm:gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors sm:ml-4">
               <LogOut size={16} />
-              Sair
+              <span className="hidden sm:inline">Sair</span>
             </button>
           ) : (
-            <button onClick={login} className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors ml-4">
+            <button onClick={login} className="flex items-center gap-1 sm:gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors sm:ml-4">
               <LogIn size={16} />
-              Login Admin
+              <span className="hidden sm:inline">Login</span>
             </button>
           )}
         </div>
