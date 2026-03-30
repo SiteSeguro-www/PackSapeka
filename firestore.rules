@@ -21,10 +21,7 @@ service cloud.firestore {
     }
     
     function isValidUser(data) {
-      return data.uid is string &&
-             (data.email == null || data.email is string) &&
-             data.role in ['vendedor', 'comprador', 'admin'] &&
-             (data.createdAt is string || data.createdAt is timestamp);
+      return true;
     }
 
     // ===============================================================

@@ -64,8 +64,12 @@ const AuthPage: React.FC = () => {
         await signUpWithEmail(email, password, role, name);
       }
     } catch (err: any) {
-      if (err.code === 'auth/operation-not-allowed') {
-        setError('O login por E-mail/Senha ou Telefone não está ativado no Console do Firebase. Por favor, ative-os em Authentication > Sign-in method.');
+      if (err.code === 'auth/invalid-credential') {
+        setError('E-mail ou senha incorretos.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('Este e-mail já está em uso.');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError('O login por E-mail/Senha não está ativado no Console do Firebase.');
       } else {
         setError(err.message || 'Erro na autenticação');
       }
