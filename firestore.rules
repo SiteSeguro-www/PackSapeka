@@ -21,7 +21,8 @@ service cloud.firestore {
     }
     
     function isValidUser(data) {
-      return true;
+      return data.uid is string &&
+             data.role in ['vendedor', 'comprador', 'admin'];
     }
 
     // ===============================================================
@@ -30,7 +31,7 @@ service cloud.firestore {
 
     // Users
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && isValidUser(request.resource.data);
       allow update: if isAdmin() || (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role);
       allow delete: if isAdmin();
@@ -45,7 +46,9 @@ service cloud.firestore {
     // Services
     match /services/{serviceId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.sellerId == request.auth.uid && request.resource.data.sellerId == request.auth.uid);
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.sellerId == request.auth.uid);
     }
 
     // Orders
