@@ -12,13 +12,32 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.email == 'dweminem@gmail.com';
     }
     
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
     function hasRequiredFields(fields) {
       return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.email is string &&
+             data.role in ['vendedor', 'comprador'] &&
+             data.createdAt is string;
     }
 
     // ===============================================================
     // Rules
     // ===============================================================
+
+    // Users
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role;
+      allow delete: if isAdmin();
+    }
 
     // Profile (Singleton: /profile/main)
     match /profile/{docId} {

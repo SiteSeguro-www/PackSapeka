@@ -37,6 +37,22 @@ export default function CheckoutSuccess() {
         if (data.payment_status === 'paid') {
           // Update Firestore
           await updateDoc(orderRef, { status: 'paid' });
+          
+          // Send "Payment Confirmed" Email
+          try {
+            const orderData = orderSnap.data();
+            await fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'payment_confirmed',
+                order: { id: orderId, ...orderData }
+              })
+            });
+          } catch (e) {
+            console.error("Erro ao enviar e-mail de confirmação de pagamento:", e);
+          }
+
           setStatus('success');
         } else {
           // Payment not completed yet (e.g., PIX pending)

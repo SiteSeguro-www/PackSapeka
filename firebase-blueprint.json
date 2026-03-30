@@ -59,6 +59,20 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
       },
       "required": ["customerName", "rating", "comment", "active", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with role information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email", "description": "User email" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "role": { "type": "string", "enum": ["vendedor", "comprador"], "description": "User role" },
+        "phone": { "type": "string", "description": "User phone number" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
     }
   },
   "firestore": {
@@ -77,6 +91,10 @@
     "/reviews/{reviewId}": {
       "schema": { "$ref": "#/entities/Review" },
       "description": "Collection of customer reviews."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of user profiles."
     }
   }
 }

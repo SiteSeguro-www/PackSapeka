@@ -7,6 +7,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
+import AuthPage from './pages/AuthPage';
 import Checkout from './pages/Checkout';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -39,6 +40,7 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/checkout/:serviceId" element={<PublicLayout><Checkout /></PublicLayout>} />
           <Route path="/checkout/success" element={<PublicLayout><CheckoutSuccess /></PublicLayout>} />
 
