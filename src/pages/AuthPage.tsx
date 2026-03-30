@@ -7,7 +7,7 @@ import { auth } from '../firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 const AuthPage: React.FC = () => {
-  const { loginWithGoogle, loginWithEmail, signUpWithEmail, user, loading } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signUpWithEmail, loginAnonymously, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogin, setIsLogin] = useState(true);
@@ -41,6 +41,18 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      setError(null);
+      setIsSubmitting(true);
+      await loginAnonymously();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao entrar como convidado');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -52,7 +64,11 @@ const AuthPage: React.FC = () => {
         await signUpWithEmail(email, password, role, name);
       }
     } catch (err: any) {
-      setError(err.message || 'Erro na autenticação');
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('O login por E-mail/Senha ou Telefone não está ativado no Console do Firebase. Por favor, ative-os em Authentication > Sign-in method.');
+      } else {
+        setError(err.message || 'Erro na autenticação');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +95,11 @@ const AuthPage: React.FC = () => {
       const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       setConfirmationResult(result);
     } catch (err: any) {
-      setError(err.message || 'Erro ao enviar SMS');
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('O login por Telefone não está ativado no Console do Firebase. Por favor, ative-o em Authentication > Sign-in method.');
+      } else {
+        setError(err.message || 'Erro ao enviar SMS');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -94,7 +114,11 @@ const AuthPage: React.FC = () => {
         await confirmationResult.confirm(verificationCode);
       }
     } catch (err: any) {
-      setError(err.message || 'Código inválido');
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('O login por Telefone não está ativado no Console do Firebase. Por favor, ative-o em Authentication > Sign-in method.');
+      } else {
+        setError(err.message || 'Código inválido');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -295,12 +319,12 @@ const AuthPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <button 
                     type="button"
                     onClick={handleGoogleLogin}
                     disabled={isSubmitting}
-                    className="flex items-center justify-center gap-3 py-3 px-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-sm font-bold text-white"
+                    className="flex flex-col items-center justify-center gap-2 py-3 px-2 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-[10px] font-bold text-white"
                   >
                     <Chrome className="w-5 h-5 text-orange-500" />
                     Google
@@ -309,10 +333,19 @@ const AuthPage: React.FC = () => {
                     type="button"
                     onClick={() => setIsPhoneAuth(true)}
                     disabled={isSubmitting}
-                    className="flex items-center justify-center gap-3 py-3 px-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-sm font-bold text-white"
+                    className="flex flex-col items-center justify-center gap-2 py-3 px-2 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-[10px] font-bold text-white"
                   >
                     <Phone className="w-5 h-5 text-yellow-500" />
                     Telefone
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleGuestLogin}
+                    disabled={isSubmitting}
+                    className="flex flex-col items-center justify-center gap-2 py-3 px-2 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-[10px] font-bold text-white"
+                  >
+                    <User className="w-5 h-5 text-blue-500" />
+                    Convidado
                   </button>
                 </div>
               </motion.div>

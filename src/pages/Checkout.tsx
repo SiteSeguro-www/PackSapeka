@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, getDoc, collection, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebase';
 import { motion } from 'motion/react';
 import { ShieldCheck, CreditCard, ArrowLeft, ExternalLink, Copy, CheckCircle2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -70,11 +70,24 @@ export default function Checkout() {
           customerName: formData.customerName || 'Cliente Pix',
           customerEmail: formData.customerEmail || '',
           customerPhone: formData.customerPhone || '',
+          customerId: auth.currentUser?.uid || null,
           serviceId: service.id,
           serviceTitle: service.title,
+          sellerId: service.sellerId || null,
+          sellerName: service.sellerName || 'Vendedor',
           price: service.price,
           status: 'pending',
           paymentMethod: 'pix',
+          createdAt: serverTimestamp()
+        });
+
+        // Post to Feed automatically for Pix sale intent
+        await addDoc(collection(db, 'feed'), {
+          type: 'sale',
+          authorName: 'Sistema',
+          authorId: 'system',
+          serviceTitle: service.title,
+          price: service.price,
           createdAt: serverTimestamp()
         });
 
@@ -118,8 +131,11 @@ export default function Checkout() {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
+        customerId: auth.currentUser?.uid || null,
         serviceId: service.id,
         serviceTitle: service.title,
+        sellerId: service.sellerId || null,
+        sellerName: service.sellerName || 'Vendedor',
         price: service.price,
         status: 'pending',
         stripeSessionId: data.sessionId,

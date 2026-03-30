@@ -22,9 +22,9 @@ service cloud.firestore {
     
     function isValidUser(data) {
       return data.uid is string &&
-             data.email is string &&
-             data.role in ['vendedor', 'comprador'] &&
-             data.createdAt is string;
+             (data.email == null || data.email is string) &&
+             data.role in ['vendedor', 'comprador', 'admin'] &&
+             (data.createdAt is string || data.createdAt is timestamp);
     }
 
     // ===============================================================
@@ -33,9 +33,9 @@ service cloud.firestore {
 
     // Users
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role;
+      allow update: if isAdmin() || (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role);
       allow delete: if isAdmin();
     }
 
@@ -61,14 +61,22 @@ service cloud.firestore {
                     && request.resource.data.serviceId is string
                     && request.resource.data.price is number && request.resource.data.price >= 0;
       
-      // Allow status update to 'paid' for the success flow
+      // Allow status update for admins or sellers (for their own orders)
       allow update: if isAdmin() || (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && request.resource.data.status == 'paid'
-        && resource.data.status == 'pending'
+        isAuthenticated() && (
+          (resource.data.sellerId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status == 'paid' && resource.data.status == 'pending')
+        )
       );
       
-      allow read, delete: if isAdmin();
+      allow read: if isAdmin() || (
+        isAuthenticated() && (
+          resource.data.customerEmail == request.auth.token.email ||
+          resource.data.customerId == request.auth.uid ||
+          resource.data.sellerId == request.auth.uid
+        )
+      );
+      allow delete: if isAdmin();
     }
 
     // Reviews
@@ -79,6 +87,27 @@ service cloud.firestore {
                     && request.resource.data.rating is number && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
                     && request.resource.data.comment is string && request.resource.data.comment.size() > 0 && request.resource.data.comment.size() < 1000;
       allow update, delete: if isAdmin();
+    }
+
+    // Feed
+    match /feed/{itemId} {
+      allow read: if true;
+      allow create: if (
+                      // Regular posts by authenticated users
+                      isAuthenticated() 
+                      && hasRequiredFields(['type', 'authorName', 'authorId', 'createdAt'])
+                      && request.resource.data.type == 'post'
+                      && request.resource.data.authorId == request.auth.uid
+                      && request.resource.data.content is string && request.resource.data.content.size() > 0 && request.resource.data.content.size() < 2000
+                    ) || (
+                      // Automatic sale notifications (can be posted by system or authenticated users)
+                      hasRequiredFields(['type', 'authorName', 'authorId', 'createdAt', 'serviceTitle', 'price'])
+                      && request.resource.data.type == 'sale'
+                      && (request.resource.data.authorId == 'system' || (isAuthenticated() && request.resource.data.authorId == request.auth.uid))
+                      && request.resource.data.serviceTitle is string && request.resource.data.serviceTitle.size() > 0
+                      && request.resource.data.price is number && request.resource.data.price >= 0
+                    );
+      allow update, delete: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.authorId);
     }
   }
 }

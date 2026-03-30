@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion } from 'motion/react';
 import { ShieldCheck, Loader2, XCircle } from 'lucide-react';
@@ -21,7 +21,6 @@ export default function CheckoutSuccess() {
       }
 
       try {
-        // Check if order is already paid to avoid unnecessary calls
         const orderRef = doc(db, 'orders', orderId);
         const orderSnap = await getDoc(orderRef);
         
@@ -30,33 +29,27 @@ export default function CheckoutSuccess() {
           return;
         }
 
-        // Verify with backend
         const response = await fetch(`/api/verify-session?session_id=${sessionId}`);
         const data = await response.json();
 
         if (data.payment_status === 'paid') {
-          // Update Firestore
           await updateDoc(orderRef, { status: 'paid' });
           
-          // Send "Payment Confirmed" Email
-          try {
+          // Post to Feed automatically
+          if (orderSnap.exists()) {
             const orderData = orderSnap.data();
-            await fetch('/api/send-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                type: 'payment_confirmed',
-                order: { id: orderId, ...orderData }
-              })
+            await addDoc(collection(db, 'feed'), {
+              type: 'sale',
+              authorName: 'Sistema',
+              authorId: 'system',
+              serviceTitle: orderData.serviceTitle,
+              price: orderData.price,
+              createdAt: serverTimestamp()
             });
-          } catch (e) {
-            console.error("Erro ao enviar e-mail de confirmação de pagamento:", e);
           }
-
+          
           setStatus('success');
         } else {
-          // Payment not completed yet (e.g., PIX pending)
-          // We can still show success but mention it's pending
           setStatus('success'); 
         }
       } catch (error) {

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
 import { motion } from 'motion/react';
 import { DollarSign, ShoppingBag, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
 import { format, subDays, startOfDay, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   AreaChart, 
   Area, 
@@ -17,6 +18,8 @@ import {
 } from 'recharts';
 
 export default function AdminDashboard() {
+  const { user, isAdmin, role } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({ 
     totalRevenue: 0, 
     totalOrders: 0, 
@@ -26,9 +29,26 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (role === 'comprador' && !isAdmin) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [role, isAdmin, navigate]);
+
   const fetchStats = async () => {
+    if (!user) return;
     try {
-      const ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      let ordersQuery;
+      if (isAdmin) {
+        ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      } else {
+        ordersQuery = query(
+          collection(db, 'orders'), 
+          where('sellerId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+      }
+      
       const ordersSnapshot = await getDocs(ordersQuery);
       
       let revenue = 0;
@@ -42,7 +62,7 @@ export default function AdminDashboard() {
       }
 
       ordersSnapshot.docs.forEach((doc, index) => {
-        const data = doc.data();
+        const data = doc.data() as any;
         if (data.status !== 'cancelled') {
           revenue += data.price;
           

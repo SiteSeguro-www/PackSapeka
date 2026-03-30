@@ -1,23 +1,43 @@
 import { useEffect, useState } from 'react';
-import { collection, getDocs, updateDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CheckCircle, Clock, XCircle, CreditCard, Search, Loader2, MoreHorizontal } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminOrders() {
+  const { user, isAdmin, role } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (role === 'comprador' && !isAdmin) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [role, isAdmin, navigate]);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchOrders = async () => {
+    if (!user) return;
     try {
-      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      let q;
+      if (isAdmin) {
+        q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      } else {
+        q = query(
+          collection(db, 'orders'), 
+          where('sellerId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+      }
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const data = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
       setOrders(data);
       setFilteredOrders(data);
     } catch (error) {
@@ -29,7 +49,7 @@ export default function AdminOrders() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     let result = orders;

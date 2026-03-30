@@ -4,14 +4,18 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function AdminLayout() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, role, isAdmin } = useAuth();
 
   const links = [
-    { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/admin/services', icon: Briefcase, label: 'Serviços' },
-    { to: '/admin/orders', icon: ShoppingCart, label: 'Pedidos' },
-    { to: '/admin/profile', icon: User, label: 'Perfil' },
+    { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['vendedor', 'admin'] },
+    { to: '/admin/services', icon: Briefcase, label: 'Serviços', roles: ['vendedor', 'admin'] },
+    { to: '/admin/orders', icon: ShoppingCart, label: 'Pedidos', roles: ['vendedor', 'admin'] },
+    { to: '/admin/profile', icon: User, label: 'Perfil', roles: ['vendedor', 'comprador', 'admin'] },
   ];
+
+  const filteredLinks = links.filter(link => 
+    isAdmin || (role && link.roles.includes(role))
+  );
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 text-gray-900 font-sans">
@@ -19,7 +23,7 @@ export default function AdminLayout() {
       <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col flex-shrink-0">
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200">
           <span className="text-xl font-bold tracking-tighter">
-            ADMIN<span className="text-orange-500">.</span>
+            PAINEL<span className="text-orange-500">.</span>
           </span>
           <Link to="/" className="md:hidden flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900">
             <ArrowLeft size={18} /> Site
@@ -27,7 +31,7 @@ export default function AdminLayout() {
         </div>
         
         <nav className="p-4 flex md:flex-col gap-2 overflow-x-auto md:overflow-visible hide-scrollbar">
-          {links.map((link) => {
+          {filteredLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (

@@ -1,12 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
 import { Plus, Edit2, Trash2, X, Check, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { compressImage } from '../../lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminServices() {
+  const { user, isAdmin, role } = useAuth();
+  const navigate = useNavigate();
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (role === 'comprador' && !isAdmin) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [role, isAdmin, navigate]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -23,10 +33,20 @@ export default function AdminServices() {
   });
 
   const fetchServices = async () => {
+    if (!user) return;
     try {
-      const q = query(collection(db, 'services'), orderBy('createdAt', 'desc'));
+      let q;
+      if (isAdmin) {
+        q = query(collection(db, 'services'), orderBy('createdAt', 'desc'));
+      } else {
+        q = query(
+          collection(db, 'services'), 
+          where('sellerId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+      }
       const snapshot = await getDocs(q);
-      setServices(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      setServices(snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
     } catch (error) {
       console.error("Error fetching services:", error);
     } finally {
@@ -36,7 +56,7 @@ export default function AdminServices() {
 
   useEffect(() => {
     fetchServices();
-  }, []);
+  }, [user]);
 
   const handleOpenModal = (service?: any) => {
     if (service) {
@@ -91,12 +111,16 @@ export default function AdminServices() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     try {
       if (editingId) {
         await updateDoc(doc(db, 'services', editingId), formData);
       } else {
         await addDoc(collection(db, 'services'), {
           ...formData,
+          sellerId: user.uid,
+          sellerName: user.displayName || 'Vendedor',
+          sellerEmail: user.email,
           createdAt: serverTimestamp()
         });
       }

@@ -8,6 +8,7 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInAnonymously,
   RecaptchaVerifier,
   signInWithPhoneNumber,
   ConfirmationResult
@@ -19,22 +20,26 @@ export type UserRole = 'vendedor' | 'comprador' | 'admin';
 interface AuthContextType {
   user: User | null;
   role: UserRole | null;
+  userProfile: any | null;
   isAdmin: boolean;
   loading: boolean;
   loginWithGoogle: (role?: UserRole) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, role: UserRole, name: string) => Promise<void>;
+  loginAnonymously: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
+  userProfile: null,
   isAdmin: false,
   loading: true,
   loginWithGoogle: async () => {},
   loginWithEmail: async () => {},
   signUpWithEmail: async () => {},
+  loginAnonymously: async () => {},
   logout: async () => {},
 });
 
@@ -43,23 +48,29 @@ const ADMIN_EMAIL = 'dweminem@gmail.com';
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // Fetch role from Firestore
+        // Fetch role and profile from Firestore
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
-          setRole(userDoc.data().role as UserRole);
+          const data = userDoc.data();
+          setRole(data.role as UserRole);
+          setUserProfile(data);
         } else if (user.email === ADMIN_EMAIL) {
           setRole('admin');
+          setUserProfile({ uid: user.uid, email: user.email, role: 'admin' });
         } else {
           setRole(null);
+          setUserProfile(null);
         }
       } else {
         setRole(null);
+        setUserProfile(null);
       }
       setLoading(false);
     });
@@ -122,6 +133,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginAnonymously = async () => {
+    try {
+      const result = await signInAnonymously(auth);
+      const user = result.user;
+      
+      // Create a basic profile for the guest
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        displayName: 'Convidado',
+        role: 'comprador',
+        isAnonymous: true,
+        createdAt: new Date().toISOString()
+      });
+      setRole('comprador');
+    } catch (error) {
+      console.error('Error signing in anonymously:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -137,11 +168,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
       user, 
       role, 
+      userProfile,
       isAdmin, 
       loading, 
       loginWithGoogle, 
       loginWithEmail,
       signUpWithEmail,
+      loginAnonymously,
       logout 
     }}>
       {children}
