@@ -108,7 +108,8 @@ export default function AdminOrders() {
                     {order.status === 'completed' && (
                       <button
                         onClick={() => {
-                          const link = `${window.location.origin}/?review=true&orderId=${order.id}`;
+                          const baseUrl = window.location.href.split('#')[0];
+                          const link = `${baseUrl}#/?review=true&orderId=${order.id}`;
                           navigator.clipboard.writeText(link);
                           alert('Link de avaliação copiado para a área de transferência!');
                         }}

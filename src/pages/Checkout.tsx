@@ -83,34 +83,14 @@ export default function Checkout() {
         return;
       }
 
-      // 2. Call Backend to create Stripe Session
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          service,
-          customer: {
-            name: formData.customerName,
-            email: formData.customerEmail,
-            phone: formData.customerPhone
-          },
-          orderId,
-          paymentMethod: formData.paymentMethod
-        })
-      });
-
-      let data;
-      const text = await response.text();
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("Resposta não-JSON do servidor:", text);
-        throw new Error("Erro de comunicação com o servidor de pagamentos.");
-      }
-
-      if (!response.ok) throw new Error(data.error || 'Erro ao criar sessão de pagamento');
-
-      // 3. Save Order to Firestore as Pending
+      // 2. Call Backend to create Stripe Session (DISABLED FOR STATIC HOSTING)
+      /* 
+      Para que o Stripe funcione em um site estático (GitHub Pages), você deve:
+      1. Usar Firebase Functions para processar o pagamento com segurança.
+      2. Ou usar um Stripe Payment Link direto.
+      */
+      
+      // Simulação para modo estático: salvamos o pedido e mostramos sucesso
       await setDoc(orderRef, {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
@@ -119,20 +99,11 @@ export default function Checkout() {
         serviceTitle: service.title,
         price: service.price,
         status: 'pending',
-        stripeSessionId: data.sessionId,
+        paymentMethod: formData.paymentMethod,
         createdAt: serverTimestamp()
       });
 
-      // 4. Redirect to Stripe
-      if (window.self !== window.top) {
-        // Estamos dentro de um iframe (AI Studio Preview)
-        // O Stripe bloqueia iframes, então abrimos em nova aba
-        const newWindow = window.open(data.url, '_blank');
-        setCheckoutUrl(data.url); // Mostra o botão de qualquer forma
-      } else {
-        // Não estamos em iframe, pode redirecionar normalmente
-        window.location.href = data.url;
-      }
+      setSuccess(true);
       setSubmitting(false);
     } catch (error: any) {
       console.error("Error creating order:", error);
