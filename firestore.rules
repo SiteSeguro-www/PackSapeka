@@ -55,7 +55,11 @@ service cloud.firestore {
     // Reviews
     match /reviews/{reviewId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if hasRequiredFields(['customerName', 'rating', 'comment', 'active', 'createdAt'])
+                    && request.resource.data.customerName is string && request.resource.data.customerName.size() > 0 && request.resource.data.customerName.size() < 100
+                    && request.resource.data.rating is number && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+                    && request.resource.data.comment is string && request.resource.data.comment.size() > 0 && request.resource.data.comment.size() < 1000;
+      allow update, delete: if isAdmin();
     }
   }
 }

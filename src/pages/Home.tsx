@@ -1,15 +1,53 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { Link, useSearchParams } from 'react-router-dom';
+import { collection, doc, getDoc, getDocs, query, where, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { motion } from 'motion/react';
-import { Star, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Star, ArrowRight, CheckCircle2, X } from 'lucide-react';
 
 export default function Home() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Review Modal State
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ customerName: '', rating: 5, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('review') === 'true') {
+      setIsReviewModalOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingReview(true);
+    try {
+      await addDoc(collection(db, 'reviews'), {
+        ...reviewForm,
+        orderId: searchParams.get('orderId') || null,
+        active: true, // Auto-approve for now, or set to false if admin approval is needed
+        createdAt: serverTimestamp()
+      });
+      setReviewSuccess(true);
+      setTimeout(() => {
+        setIsReviewModalOpen(false);
+        setReviewSuccess(false);
+        setReviewForm({ customerName: '', rating: 5, comment: '' });
+        setSearchParams({}); // Clear URL params
+      }, 3000);
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Erro ao enviar avaliação. Tente novamente.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -192,7 +230,107 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        <div className="mt-12 text-center relative z-10">
+          <button
+            onClick={() => setIsReviewModalOpen(true)}
+            className="bg-white/5 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/10 transition-colors border border-white/10 backdrop-blur-sm"
+          >
+            Deixar Avaliação
+          </button>
+        </div>
       </section>
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {isReviewModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#111] border border-white/10 p-8 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] w-full max-w-md relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500"></div>
+              
+              <button
+                onClick={() => setIsReviewModalOpen(false)}
+                className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+
+              {reviewSuccess ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 size={32} className="text-green-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Obrigado!</h3>
+                  <p className="text-white/70">Sua avaliação foi enviada com sucesso.</p>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Sua Avaliação</h2>
+                  <form onSubmit={handleReviewSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-white/60 mb-1">Seu Nome</label>
+                      <input
+                        required
+                        type="text"
+                        value={reviewForm.customerName}
+                        onChange={(e) => setReviewForm({ ...reviewForm, customerName: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all placeholder:text-white/20"
+                        placeholder="Como gostaria de ser chamado?"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-white/60 mb-2">Sua Nota</label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                            className={`transition-colors ${reviewForm.rating >= star ? 'text-orange-500' : 'text-white/20 hover:text-white/50'}`}
+                          >
+                            <Star size={32} fill={reviewForm.rating >= star ? "currentColor" : "none"} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-white/60 mb-1">Comentário</label>
+                      <textarea
+                        required
+                        rows={4}
+                        value={reviewForm.comment}
+                        onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all placeholder:text-white/20 resize-none"
+                        placeholder="Conte-nos o que achou do serviço..."
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold py-4 rounded-xl hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                    >
+                      {submittingReview ? 'Enviando...' : 'Enviar Avaliação'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

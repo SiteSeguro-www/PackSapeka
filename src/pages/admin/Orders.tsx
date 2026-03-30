@@ -94,7 +94,7 @@ export default function AdminOrders() {
                   <td className="px-6 py-4">
                     {getStatusBadge(order.status)}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right flex flex-col items-end gap-2">
                     <select 
                       value={order.status}
                       onChange={(e) => updateStatus(order.id, e.target.value)}
@@ -105,6 +105,18 @@ export default function AdminOrders() {
                       <option value="completed">Concluído</option>
                       <option value="cancelled">Cancelado</option>
                     </select>
+                    {order.status === 'completed' && (
+                      <button
+                        onClick={() => {
+                          const link = `${window.location.origin}/?review=true&orderId=${order.id}`;
+                          navigator.clipboard.writeText(link);
+                          alert('Link de avaliação copiado para a área de transferência!');
+                        }}
+                        className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 transition-colors"
+                      >
+                        Copiar Link de Avaliação
+                      </button>
+                    )}
                   </td>
                 </tr>
               )) : (
