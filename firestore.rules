@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'dweminem@gmail.com';
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Profile (Singleton: /profile/main)
+    match /profile/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Services
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      // Anyone can create an order (checkout)
+      allow create: if hasRequiredFields(['customerName', 'customerEmail', 'serviceId', 'serviceTitle', 'price', 'status', 'createdAt'])
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.customerName is string && request.resource.data.customerName.size() > 0 && request.resource.data.customerName.size() < 100
+                    && request.resource.data.customerEmail is string && request.resource.data.customerEmail.size() >= 0 && request.resource.data.customerEmail.size() < 150
+                    && request.resource.data.serviceId is string
+                    && request.resource.data.price is number && request.resource.data.price >= 0;
+      
+      // Allow status update to 'paid' for the success flow
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status == 'paid'
+        && resource.data.status == 'pending'
+      );
+      
+      allow read, delete: if isAdmin();
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

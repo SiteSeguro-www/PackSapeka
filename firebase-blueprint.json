@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "The main profile information for the portfolio owner.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Owner's full name" },
+        "title": { "type": "string", "description": "Professional title or tagline" },
+        "bio": { "type": "string", "description": "Short biography" },
+        "avatarUrl": { "type": "string", "description": "URL to the profile picture" },
+        "email": { "type": "string", "description": "Contact email" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "instagram": { "type": "string", "description": "Instagram handle or URL" },
+        "linkedin": { "type": "string", "description": "LinkedIn profile URL" }
+      },
+      "required": ["name", "title", "bio"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "A service offered by the portfolio owner.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Service title" },
+        "description": { "type": "string", "description": "Detailed description of the service" },
+        "price": { "type": "number", "description": "Price of the service" },
+        "deliveryTime": { "type": "string", "description": "Estimated delivery time (e.g., '3 days')" },
+        "imageUrl": { "type": "string", "description": "URL to the service image" },
+        "active": { "type": "boolean", "description": "Whether the service is currently available" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["title", "description", "price", "active", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "An order placed by a customer.",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string", "description": "Customer's full name" },
+        "customerEmail": { "type": "string", "format": "email", "description": "Customer's email address" },
+        "customerPhone": { "type": "string", "description": "Customer's phone number" },
+        "serviceId": { "type": "string", "description": "ID of the purchased service" },
+        "serviceTitle": { "type": "string", "description": "Title of the purchased service" },
+        "price": { "type": "number", "description": "Price paid" },
+        "status": { "type": "string", "enum": ["pending", "paid", "completed", "cancelled"], "description": "Order status" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Order creation timestamp" }
+      },
+      "required": ["customerName", "customerEmail", "serviceId", "serviceTitle", "price", "status", "createdAt"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "A customer review.",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string", "description": "Reviewer's name" },
+        "rating": { "type": "number", "description": "Rating out of 5" },
+        "comment": { "type": "string", "description": "Review text" },
+        "active": { "type": "boolean", "description": "Whether the review is visible" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["customerName", "rating", "comment", "active", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/profile/{docId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "Singleton collection for the owner's profile (docId is usually 'main')."
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/Service" },
+      "description": "Collection of services offered."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Collection of customer orders."
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Collection of customer reviews."
+    }
+  }
+}

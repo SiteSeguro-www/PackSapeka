@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-shine: shine 3s infinite linear;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  
+  @keyframes shine {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  @keyframes glow {
+    from { box-shadow: 0 0 10px -5px rgba(249, 115, 22, 0.5); }
+    to { box-shadow: 0 0 20px 5px rgba(249, 115, 22, 0.8); }
+  }
+}
+
+body {
+  background-color: #050505;
+  color: #ffffff;
+  background-image: radial-gradient(circle at 50% 0%, #2a1100 0%, #050505 60%);
+  background-attachment: fixed;
+}
