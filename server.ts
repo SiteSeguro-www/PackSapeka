@@ -60,8 +60,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-      cancel_url: `${appUrl}/checkout/${service.id}`,
+      success_url: `${appUrl}/#/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
+      cancel_url: `${appUrl}/#/checkout/${service.id}`,
       customer_email: customer.email,
       metadata: {
         orderId: orderId,

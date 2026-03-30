@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import Checkout from './pages/Checkout';
@@ -35,7 +35,7 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => (
 export default function App() {
   return (
     <AuthProvider>
-      <Router basename={import.meta.env.BASE_URL}>
+      <Router>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
