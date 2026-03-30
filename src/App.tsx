@@ -35,7 +35,7 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => (
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename={import.meta.env.BASE_URL}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />

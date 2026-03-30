@@ -5,7 +5,14 @@ import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
+  
+  // Use /PackSapeka/ as base for GitHub Pages, but / for AI Studio and local dev
+  // We check for APP_URL which is present in AI Studio environment
+  const isAiStudio = !!process.env.APP_URL || !!env.APP_URL;
+  const base = isAiStudio ? '/' : '/PackSapeka/';
+
   return {
+    base,
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
