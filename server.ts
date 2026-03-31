@@ -34,7 +34,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     // Ensure appUrl doesn't have a trailing slash
     const rawAppUrl = process.env.APP_URL || `http://localhost:${PORT}`;
     const appUrl = rawAppUrl.replace(/\/$/, '');
-    
+
     // Determine payment method types based on user selection
     const payment_method_types = paymentMethod === 'pix' ? ['pix'] : ['card'];
     
@@ -43,7 +43,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     
     // Truncate description to avoid Stripe 500 char limit
     const description = (service.description || 'Serviço Premium').substring(0, 499);
-    
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: payment_method_types as any,
       line_items: [
@@ -71,14 +71,14 @@ app.post('/api/create-checkout-session', async (req, res) => {
         customerPhone: customer.phone,
       }
     });
-    
+
     res.json({ url: session.url, sessionId: session.id });
   } catch (error: any) {
     console.error('Stripe error:', error);
     res.status(500).json({ error: error.message });
   }
 });
-    
+
 // Verify a Stripe Session status
 app.get('/api/verify-session', async (req, res) => {
   try {
@@ -94,7 +94,7 @@ app.get('/api/verify-session', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-    
+
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -103,17 +103,16 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // Look for dist in the root directory, which is one level up from backend/
-    const distPath = path.join(__dirname, '../dist');
+    const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-    
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
-    
+
 startServer();
