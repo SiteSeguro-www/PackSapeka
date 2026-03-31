@@ -6,12 +6,7 @@ import {
   signInWithPopup, 
   GoogleAuthProvider, 
   signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInAnonymously,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  ConfirmationResult
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -25,8 +20,6 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: (role?: UserRole) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
-  signUpWithEmail: (email: string, pass: string, role: UserRole, name: string) => Promise<void>;
-  loginAnonymously: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -38,8 +31,6 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   loginWithGoogle: async () => {},
   loginWithEmail: async () => {},
-  signUpWithEmail: async () => {},
-  loginAnonymously: async () => {},
   logout: async () => {},
 });
 
@@ -113,46 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUpWithEmail = async (email: string, pass: string, selectedRole: UserRole, name: string) => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, pass);
-      const user = result.user;
-      
-      const finalRole = email === ADMIN_EMAIL ? 'admin' : selectedRole;
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        displayName: name,
-        role: finalRole,
-        createdAt: new Date().toISOString()
-      });
-      setRole(finalRole);
-    } catch (error) {
-      console.error('Error signing up:', error);
-      throw error;
-    }
-  };
-
-  const loginAnonymously = async () => {
-    try {
-      const result = await signInAnonymously(auth);
-      const user = result.user;
-      
-      // Create a basic profile for the guest
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        displayName: 'Convidado',
-        role: 'comprador',
-        isAnonymous: true,
-        createdAt: new Date().toISOString()
-      });
-      setRole('comprador');
-    } catch (error) {
-      console.error('Error signing in anonymously:', error);
-      throw error;
-    }
-  };
-
   const logout = async () => {
     try {
       await signOut(auth);
@@ -173,8 +124,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loading, 
       loginWithGoogle, 
       loginWithEmail,
-      signUpWithEmail,
-      loginAnonymously,
       logout 
     }}>
       {children}
